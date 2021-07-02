@@ -1,32 +1,33 @@
 package jm.task.core.jdbc;
 
-import jm.task.core.jdbc.service.UserServiceImpl;
+import jm.task.core.jdbc.dao.UserDaoHibernateImpl;
 
 public class Main {
     public static void main(String[] args) {
-        // реализуйте алгоритм здесь
+        UserDaoHibernateImpl userDaoHibernate = new UserDaoHibernateImpl();
 
-        UserServiceImpl userService = new UserServiceImpl();
+        userDaoHibernate.createUsersTable();
 
-        userService.createUsersTable();
-
-        userService.saveUser("Ivan", "Ivanov", (byte) 20);
+        userDaoHibernate.saveUser("Ivan", "Ivanov", (byte) 20);
         System.out.println("User с именем – Ivan добавлен в базу данных");
 
-        userService.saveUser("Kirill", "Kirillov", (byte) 18);
+        userDaoHibernate.saveUser("Kirill", "Kirillov", (byte) 18);
         System.out.println("User с именем – Kirill добавлен в базу данных");
 
-        userService.saveUser("Aleksandr", "Aleksandrov", (byte) 35);
+        userDaoHibernate.saveUser("Aleksandr", "Aleksandrov", (byte) 35);
         System.out.println("User с именем – Aleksandr добавлен в базу данных");
 
-        userService.saveUser("Igor", "Igorev", (byte) 15);
+        userDaoHibernate.saveUser("Igor", "Igorev", (byte) 15);
         System.out.println("User с именем – Igor добавлен в базу данных");
 
-        userService.getAllUsers().forEach(System.out::println);
+        userDaoHibernate.removeUserById(1);
+        System.out.println("Проверка должно быть 3 User");
 
-        userService.cleanUsersTable();
+        userDaoHibernate.getAllUsers().forEach(System.out::println);
 
-        userService.dropUsersTable();
+        userDaoHibernate.cleanUsersTable();
+
+        userDaoHibernate.dropUsersTable();
 
 
     }
