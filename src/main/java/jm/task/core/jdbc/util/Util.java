@@ -12,9 +12,9 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 public class Util {
-    private static final String url = "jdbc:mysql://localhost:3306/jmbase";
-    private static final String user = "root";
-    private static final String password = "12345678";
+    private static final String URL = "jdbc:mysql://localhost:3306/jmbase";
+    private static final String USER = "root";
+    private static final String PASSWORD = "12345678";
 
 
     public static Connection getConnection() {
@@ -22,14 +22,14 @@ public class Util {
 
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection(url, user, password);
+            connection = DriverManager.getConnection(URL, USER, PASSWORD);
         } catch (ClassNotFoundException | SQLException e) {
             e.printStackTrace();
         }
         return connection;
     }
 
-    private static final SessionFactory concreteSessionFactory;
+    private static SessionFactory concreteSessionFactory = null;
 
     static {
         try {
@@ -38,16 +38,17 @@ public class Util {
             prop.setProperty("hibernate.connection.username", "root");
             prop.setProperty("hibernate.connection.password", "12345678");
             prop.setProperty("dialect", "org.hibernate.dialect.MySQLDialect");
-            prop.setProperty("hibernate.order_updates", "true");
-            prop.setProperty("hibernate.hbm2ddl.auto", "create");
+            prop.setProperty("hibernate.hbm2ddl.auto", "create-drop");
+            prop.setProperty("hibernate.connection.autocommit", "false");
 
             concreteSessionFactory = new Configuration()
                     .addProperties(prop)
                     .addAnnotatedClass(User.class)
-                    .buildSessionFactory()
-            ;
-        } catch (Exception ex) {
-            throw new ExceptionInInitializerError(ex);
+                    .buildSessionFactory();
+
+        } catch (ExceptionInInitializerError ex) {
+            System.err.println("Ошибка при инициализации SesstionFactory");
+            ex.printStackTrace();
         }
     }
 

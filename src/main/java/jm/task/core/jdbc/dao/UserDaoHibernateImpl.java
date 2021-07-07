@@ -3,12 +3,11 @@ package jm.task.core.jdbc.dao;
 import jm.task.core.jdbc.model.User;
 import jm.task.core.jdbc.util.Util;
 import org.hibernate.HibernateException;
-import org.hibernate.QueryException;
 import org.hibernate.Session;
-import org.hibernate.SessionException;
 
-import javax.persistence.Query;
 import java.util.List;
+
+import static jm.task.core.jdbc.util.Util.getSession;
 
 public class UserDaoHibernateImpl implements UserDao {
     public UserDaoHibernateImpl() {
@@ -17,82 +16,156 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void createUsersTable() {
-        try (Session session = Util.getSession()) {
-            session.beginTransaction();
-            String sql = "CREATE TABLE if not exists USER(\n" +
-                    "    id       int         NOT NULL PRIMARY KEY AUTO_INCREMENT,\n" +
-                    "    name     VARCHAR(50) NOT NULL,\n" +
-                    "    lastName VARCHAR(50) NOT NULL,\n" +
-                    "    age      smallint\n" +
-                    ")";
+        Session session = null;
 
-            Query query = session.createSQLQuery(sql).addEntity(User.class);
-            query.executeUpdate();
-        } catch (QueryException e) {
+        String sql = "CREATE TABLE if not exists users(\n" +
+                "id       bigint      NOT NULL PRIMARY KEY AUTO_INCREMENT,\n" +
+                "name     VARCHAR(50) NOT NULL,\n" +
+                "lastName VARCHAR(50) NOT NULL,\n" +
+                "age      TINYINT \n" +
+                ")";
+
+        try {
+
+            session = getSession();
+            session.beginTransaction();
+            session.createSQLQuery(sql).addEntity(User.class).executeUpdate();
+            session.getTransaction().commit();
+
+        } catch (HibernateException e) {
             System.err.println("Ошибка при создании таблицы");
             e.printStackTrace();
-        } catch (HibernateException e) {
+            try {
+                if (session != null) {
+                    session.getTransaction().rollback();
+                }
+            } catch (HibernateException hibernateException) {
+                hibernateException.printStackTrace();
+                System.err.println("Попытка отменить изменения, после попытки создания таблицы - неудачна");
+            }
             System.err.println("Ошибка при попытке соединиться с БД");
             e.printStackTrace();
+        } finally {
+            if (session != null) {
+                try {
+                    session.close();
+                } catch (HibernateException e) {
+                    System.err.println("Ошибка закрытия соединения с БД во время создания таблицы");
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
     @Override
     public void dropUsersTable() {
-        try (Session session = Util.getSession()) {
+        Session session = null;
+        String sql = "drop table if exists users";
+
+        try {
+            session = getSession();
             session.beginTransaction();
-            String sql = "drop table if exists user";
-            Query query = session.createSQLQuery(sql).addEntity(User.class);
-            query.executeUpdate();
-        } catch (QueryException e) {
-            System.err.println("Ошибка при удалении таблицы из БД");
-            e.printStackTrace();
+            session.createSQLQuery(sql).addEntity(User.class).executeUpdate();
+            session.getTransaction().commit();
         } catch (HibernateException e) {
             System.err.println("Ошибка при попытке соединиться с БД");
             e.printStackTrace();
+            try {
+                if (session != null) {
+                    session.getTransaction().rollback();
+                }
+            } catch (HibernateException hibernateException) {
+                hibernateException.printStackTrace();
+                System.err.println("Попытка отменить изменения, после попытки создания таблицы - неудачна");
+            }
+        } finally {
+            if (session != null) {
+                try {
+                    session.close();
+                } catch (HibernateException e) {
+                    System.err.println("Ошибка закрытия соединения с БД при удалении таблицы из БД");
+                    e.printStackTrace();
+                }
+            }
         }
-
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        try (Session session = Util.getSession()) {
+        Session session = null;
+
+        try {
+            session = getSession();
             session.beginTransaction();
             session.save(new User(name, lastName, age));
-        } catch (SessionException e) {
-            System.err.println("Ошибка при попытке сохранить User в БД");
-            e.printStackTrace();
+            session.getTransaction().commit();
         } catch (HibernateException e) {
-            System.err.println("Ошибка при попытке соединиться с БД");
+            System.err.println("Ошибка при сохранении User");
             e.printStackTrace();
+            try {
+                if (session != null) {
+                    session.getTransaction().rollback();
+                }
+            } catch (HibernateException hibernateException) {
+                hibernateException.printStackTrace();
+                System.err.println("Попытка отменить изменения, после попытки сохранить User - неудачна");
+            }
+        } finally {
+            if (session != null) {
+                try {
+                    session.close();
+                } catch (HibernateException e) {
+                    System.err.println("Ошибка закрытия соединения с БД при попытке сохранить User в БД");
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
     @Override
     public void removeUserById(long id) {
-        try (Session session = Util.getSession()) {
+        Session session = Util.getSession();
+        String hql = "delete " + User.class.getName() + " where id = :id";
+        try {
+
+            session = Util.getSession();
             session.beginTransaction();
-            User user = session.load(User.class, id);
-            session.remove(user);
-            session.flush();
-        } catch (SessionException e) {
-            System.err.println("Ошибка при попытке удалить User по ID из БД");
-            e.printStackTrace();
+            session.createQuery(hql).setParameter("id", id).executeUpdate();
+            session.getTransaction().commit();
+
         } catch (HibernateException e) {
-            System.err.println("Ошибка при попытке соединиться с БД");
+
+            System.err.println("Ошибка при сохранении User");
             e.printStackTrace();
+            try {
+                if (session != null) {
+                    session.getTransaction().rollback();
+                }
+            } catch (HibernateException hibernateException) {
+                hibernateException.printStackTrace();
+                System.err.println("Попытка отменить изменения, после попытки сохранить User - неудачна");
+            }
+
+        } finally {
+            if (session != null) {
+                try {
+                    session.close();
+                } catch (HibernateException e) {
+                    System.err.println("Ошибка закрытия соединения с БД при попытке сохранить User в БД");
+                    e.printStackTrace();
+                }
+            }
         }
 
     }
 
     @Override
     public List<User> getAllUsers() {
+
         List<User> users = null;
-        try (Session session = Util.getSession()) {
+
+        try (Session session = getSession()) {
             users = (List<User>) session.createQuery("From User").list();
-        } catch (QueryException e) {
-            System.err.println("Ошибка при попытке получить всех User из БД");
-            e.printStackTrace();
         } catch (HibernateException e) {
             System.err.println("Ошибка при попытке соединиться с БД");
             e.printStackTrace();
@@ -102,16 +175,32 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void cleanUsersTable() {
-        try (Session session = Util.getSession()) {
+        Session session = null;
+        try {
+            session = getSession();
             session.beginTransaction();
             session.createQuery("delete User").executeUpdate();
             session.getTransaction().commit();
-        } catch (QueryException e) {
-            System.err.println("Ошибка при попытке удалить всех User из БД");
-            e.printStackTrace();
         } catch (HibernateException e) {
-            System.err.println("Ошибка при попытке соединиться с БД");
+            System.err.println("Ошибка при очистке таблицы User");
             e.printStackTrace();
+            try {
+                if (session != null) {
+                    session.getTransaction().rollback();
+                }
+            } catch (HibernateException hibernateException) {
+                hibernateException.printStackTrace();
+                System.err.println("Попытка отменить изменения, при очистке таблицы User - неудачна");
+            }
+        } finally {
+            if (session != null) {
+                try {
+                    session.close();
+                } catch (HibernateException e) {
+                    System.err.println("Ошибка закрытия соединения с БД при очистке таблицы User в БД");
+                    e.printStackTrace();
+                }
+            }
         }
     }
 }
