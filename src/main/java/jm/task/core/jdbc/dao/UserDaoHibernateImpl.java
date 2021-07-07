@@ -1,7 +1,6 @@
 package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
-import jm.task.core.jdbc.util.Util;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 
@@ -124,11 +123,11 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void removeUserById(long id) {
-        Session session = Util.getSession();
+        Session session = getSession();
         String hql = "delete " + User.class.getName() + " where id = :id";
         try {
 
-            session = Util.getSession();
+            session = getSession();
             session.beginTransaction();
             session.createQuery(hql).setParameter("id", id).executeUpdate();
             session.getTransaction().commit();
