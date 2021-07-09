@@ -17,18 +17,16 @@ public class UserDaoHibernateImpl implements UserDao {
     public void createUsersTable() {
         Session session = null;
 
-        String sql = "CREATE TABLE if not exists users(\n" +
-                "id       bigint      NOT NULL PRIMARY KEY AUTO_INCREMENT,\n" +
-                "name     VARCHAR(50) NOT NULL,\n" +
-                "lastName VARCHAR(50) NOT NULL,\n" +
-                "age      TINYINT \n" +
-                ")";
-
         try {
 
             session = getSession();
             session.beginTransaction();
-            session.createSQLQuery(sql).addEntity(User.class).executeUpdate();
+            session.createSQLQuery("CREATE TABLE if not exists users(\n" +
+                    "id       bigint      NOT NULL PRIMARY KEY AUTO_INCREMENT,\n" +
+                    "name     VARCHAR(50) NOT NULL,\n" +
+                    "lastName VARCHAR(50) NOT NULL,\n" +
+                    "age      TINYINT \n" +
+                    ")").executeUpdate();
             session.getTransaction().commit();
 
         } catch (HibernateException e) {
@@ -59,12 +57,11 @@ public class UserDaoHibernateImpl implements UserDao {
     @Override
     public void dropUsersTable() {
         Session session = null;
-        String sql = "drop table if exists users";
 
         try {
             session = getSession();
             session.beginTransaction();
-            session.createSQLQuery(sql).addEntity(User.class).executeUpdate();
+            session.createSQLQuery("drop table if exists users").executeUpdate();
             session.getTransaction().commit();
         } catch (HibernateException e) {
             System.err.println("Ошибка при попытке соединиться с БД");
@@ -123,17 +120,16 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void removeUserById(long id) {
-        Session session = getSession();
-        String hql = "delete " + User.class.getName() + " where id = :id";
-        try {
+        Session session = null;
 
+        try {
             session = getSession();
             session.beginTransaction();
-            session.createQuery(hql).setParameter("id", id).executeUpdate();
+            session.createQuery("delete " + User.class.getName() + " where id = :id")
+                    .setParameter("id", id).executeUpdate();
             session.getTransaction().commit();
 
         } catch (HibernateException e) {
-
             System.err.println("Ошибка при сохранении User");
             e.printStackTrace();
             try {
